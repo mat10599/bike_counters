@@ -48,7 +48,7 @@ def _merge_external_data(X):
     X["orig_index"] = np.arange(X.shape[0])
 
     X = pd.merge_asof(  # , "nbas" , "raf10"
-        X.sort_values("date"), df_ext[["date", "hol_scol", "hol_bank", "t", "u", "rr1", "raf10", "nbas"]].sort_values("date").dropna(), on="date")  # , direction="nearest"
+        X.sort_values("date"), df_ext[["date", "hol_bank", "tavg", "tmin", "tmax", "prcp", "wspd"]].sort_values("date").dropna(), on="date")  # , direction="nearest"
     # Sort back to the original order
     X = X.sort_values("orig_index")
     del X["orig_index"]
@@ -69,8 +69,6 @@ def get_estimator():
     categorical_cols = ["counter_name", "site_name",
                         "weekday", "weekend", "hol_bank"]
 
-    pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth", "cos_mnth"]
-
     # train 0.409, valid 0.705, test 0.652, Bagged: valid 0.708, test 0.585
     pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth", "cos_mnth", "t"]
     # train 0.421, valid 0.686, test 0.617, Bagged: valid 0.690, test 0.569
@@ -87,6 +85,22 @@ def get_estimator():
     # train 0.39, valid 0.688, test 0.651, Bagged: valid 0.693, test 0.582
     pass_through_cols = ["sin_hours", "cos_hours",
                          "sin_mnth", "cos_mnth", "t", "u", "rr1", "nbas", "raf10"]
+
+    # train 0.466, valid 0.675, test 0.63, Bagged: valid 0.679, test 0.574
+    pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth",
+                         "cos_mnth"]
+    # NEW weather but daily
+    # train 0.383, valid 0.707, test 0.65, Bagged: valid 0.713, test 0.600
+    pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth",
+                         "cos_mnth", "tavg", "tmin", "tmax", "prcp", "wspd"]
+    # train 0.394, valid 0.714, test 0.676, Bagged: valid 0.717, test 0.599
+    #pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth","cos_mnth", "tmin"]
+    # train 0.393, valid 0.708, test 0.675, Bagged: valid 0.711, test 0.612
+    #pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth","cos_mnth", "tmax"]
+    # train 0.41, valid 0.715, test 0.657, Bagged: valid 0.724, test 0.598
+    #pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth","cos_mnth", "prcp"]
+    # train 0.399, valid 0.71, test 0.654, Bagged: valid 0.714, test 0.596
+    #pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth","cos_mnth", "wspd"]
 
     preprocessor = ColumnTransformer(
         [
@@ -108,6 +122,7 @@ def get_estimator():
     # With national holliday : train 0.515, valid 0.698, test 0.605, Bagged: valid 0.703, test 0.571
     # With nat hol and hum: train 0.483, valid 0.69, test 0.59, Bagged: valid 0.693, test 0.566
     # With nat hol t u: train 0.476, valid 0.718, test 0.601, Bagged: valid 0.722, test 0.572
+    # with all weather daily :
     parameters = {  # 'nthread': [4],  # when use hyperthread, xgboost may become slower
         'learning_rate': [0.05],  # so called `eta` value
         'max_depth': [3, 5, 6, 7],
@@ -127,8 +142,8 @@ def get_estimator():
         FunctionTransformer(_merge_external_data, validate=False),
         date_encoder,
         preprocessor,
-        regressor,
-        # xgb_grid
+        # regressor,
+        xgb_grid
     )
 
     return pipe
