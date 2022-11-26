@@ -31,7 +31,6 @@ def _encode_dates(X):
     X['sin_mnth'] = np.sin(2*np.pi*X["month"]/12)
     X['cos_mnth'] = np.cos(2*np.pi*X["month"]/12)
 
-    X["isNight"] = (X["date"].dt.hour <= 5) & (X["date"].dt.hour > 21)
     # rajouter # number of registered users if data is available?
     # The Autocorrelation Function (ACF) in R tells us the autocorrelation between current and lag values, and allows us to decide how many lag values to include in our model.
     # => check if adding count at t-1, -2, -3 is helpfull
@@ -49,7 +48,7 @@ def _merge_external_data(X):
     X["orig_index"] = np.arange(X.shape[0])
 
     X = pd.merge_asof(  # , "nbas" , "raf10"
-        X.sort_values("date"), df_ext[["date", "hol_bank", "t", "u", "rr1", "nbas", "raf10"]].sort_values("date").dropna(), on="date")  # , direction="nearest"
+        X.sort_values("date"), df_ext[["date", "hol_bank","hol_scol", "quarantine1", "quarantine2", "t","rr1", "u", "nbas", "raf10"]].sort_values("date").dropna(), on="date")  # , direction="nearest"
     # Sort back to the original order
     X = X.sort_values("orig_index")
     del X["orig_index"]
@@ -68,10 +67,11 @@ def get_estimator():
     #                    "weekday", "weekend", "hol_scol"]
     # train 0.467, valid 0.676, test 0.627, Bagged: valid 0.680, test 0.573 #bit worse
     categorical_cols = ["counter_name", "site_name",
-                        "weekday", "weekend", "hol_bank", "isNight"]
-    # train 0.467, valid 0.676, test 0.627, Bagged: valid 0.680, test 0.573 #bit worse
-    # categorical_cols = ["counter_name", "site_name",
-    #                    "weekday", "weekend", "hol_bank", "year"]
+                        "weekday", "weekend", "hol_bank"]
+    # train 0.409, valid 0.705, test 0.652, Bagged: valid 0.708, test 0.585
+    categorical_cols = ["counter_name", "site_name",
+                        "weekday", "weekend", "hol_bank",
+                          "quarantine1", "quarantine2"]
 
     # train 0.409, valid 0.705, test 0.652, Bagged: valid 0.708, test 0.585
     pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth", "cos_mnth", "t"]
@@ -91,13 +91,17 @@ def get_estimator():
                          "sin_mnth", "cos_mnth", "t", "u", "rr1", "nbas", "raf10"]
 
     # train 0.466, valid 0.675, test 0.63, Bagged: valid 0.679, test 0.574
-    # pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth",
-    #                     "cos_mnth"]
-
+    pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth",
+                         "cos_mnth"]
     # NEW weather but daily
     # train 0.383, valid 0.707, test 0.65, Bagged: valid 0.713, test 0.600
-    # pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth",
-    #                    "cos_mnth", "tavg", "tmin", "tmax", "prcp", "wspd"]
+    pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth",
+                         "cos_mnth", "tavg", "tmin", "tmax", "prcp", "wspd"]
+    pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth",
+                         "cos_mnth", "prcp", "wspd"]
+
+    pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth",
+                         "cos_mnth"]
 
     # train 0.394, valid 0.714, test 0.676, Bagged: valid 0.717, test 0.599
     #pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth","cos_mnth", "tmin"]
@@ -107,6 +111,13 @@ def get_estimator():
     #pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth","cos_mnth", "prcp"]
     # train 0.399, valid 0.71, test 0.654, Bagged: valid 0.714, test 0.596
     #pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth","cos_mnth", "wspd"]
+
+    pass_through_cols = ["sin_hours", "cos_hours",
+                         "sin_mnth", "cos_mnth", "t", "u", "rr1", "nbas", "raf10"]
+    
+    pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth",
+                         "cos_mnth"]
+
 
     preprocessor = ColumnTransformer(
         [
@@ -121,6 +132,7 @@ def get_estimator():
     #    8,), max_iter=200)  # max_iter = 1000
 
     # SCORE NO EXTERNAL DATA: train 0.481, valid 0.69, test 0.623, Bagged: valid 0.693, test 0.571
+    # when merging data : train 0.481, valid 0.69, test 0.623, Bagged: valid 0.693, test 0.571 #not missing anything
     regressor = XGBRegressor()
 
     # BEST feat with this train 0.524, valid 0.71, test 0.604, Bagged: valid 0.713, test 0.567
@@ -148,7 +160,7 @@ def get_estimator():
         date_encoder,
         preprocessor,
         regressor,
-        # xgb_grid
+        #xgb_grid
     )
 
     return pipe
