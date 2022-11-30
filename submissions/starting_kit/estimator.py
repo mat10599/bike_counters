@@ -89,7 +89,8 @@ def get_estimator():
     # train 0.484 valid  0.695 test 0.626 Bagged scores 0.698 0.572
     categorical_cols = ["counter_name", "site_name", "weekday"]
     # train 0.481 valid  0.69 test 0.623 Bagged scores 0.693 0.571
-    categorical_cols = ["counter_name", "site_name", "weekday", "weekend"]
+    categorical_cols = ["counter_name",
+                        "weekday", "weekend"]  # 0.63, 0.713, 0.572
     # train 0.481 valid  0.692 test 0.639 Bagged scores 0.695 0.577
     # categorical_cols = ["counter_name",
     #                    "site_name", "weekday", "weekend", "year"]  # CHECK PQ YEAR n'a pas d'influence positive
@@ -114,9 +115,9 @@ def get_estimator():
         ],
     )
 
-     #regressor = RidgeCV(alphas=[0.1, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 10, 15,
-     #                  20, 25, 40, 60, 100, 200, 300, 500, 1000, 1500, 3000, 6000, 10000])
-    #best_regressor_Ridge = RidgeCV(alphas = np.arange(0.1,6,0.5))   #best value is 4 when we dont include external data 
+    # regressor = RidgeCV(alphas=[0.1, 0.5, 1, 1.5, 2, 3, 4, 6, 8, 10, 15,
+    #                  20, 25, 40, 60, 100, 200, 300, 500, 1000, 1500, 3000, 6000, 10000])
+    # best_regressor_Ridge = RidgeCV(alphas = np.arange(0.1,6,0.5))   #best value is 4 when we dont include external data
     # regressor = MLPRegressor(hidden_layer_sizes=(
     #    8,), max_iter=1000)  # max_iter = 1000
     # regressor = RandomForestRegressor(n_estimators=50, n_jobs=-1)
