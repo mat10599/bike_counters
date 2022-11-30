@@ -13,6 +13,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn.neural_network import MLPRegressor
 from xgboost import XGBRegressor
+from catboost import CatBoostRegressor
 
 
 def _encode_dates(X):
@@ -61,6 +62,7 @@ def _merge_external_data(X):
     # Sort back to the original order
     X = X.sort_values("orig_index")
     del X["orig_index"]
+
     return X
 
 
@@ -68,43 +70,36 @@ def get_estimator():
     date_encoder = FunctionTransformer(_encode_dates)
     categorical_encoder = OneHotEncoder(handle_unknown="ignore")
 
-    categorical_cols = ["counter_name", "site_name",
-                        "weekend", "hol_scol", "quarantine2", "christmas_hols"]
+    categorical_cols = ["counter_name", "site_name", "year", "day", "hour", "month",
+                        "weekend", "hol_scol", "hol_bank", "quarantine1",
+                        "quarantine2", "christmas_hols"]
 
-    pass_through_cols = ["year", "day", "weekday",
-                         "sin_mnth", "cos_mnth", "sin_hours", "cos_hours"] + ["etat_sol"]
-
-    # submit also once with : pass_through_cols = ["weekday", "sin_mnth",
-    #                    "cos_mnth", "sin_hours", "cos_hours", "etat_sol"] + ["nbas", "ht_neige","ww","w1","w2"]
+    # test avec site et count et pas mean
+    # tes en enlevant qlqs trucs
+    pass_through_cols = ["weekday",
+                         "sin_mnth", "cos_mnth", "sin_hours", "cos_hours"] + ["cod_tend", "ff", "t", "u", "etat_sol"]  # + ["nbas", "ht_neige", "ww", "w1", "w2"]
 
     preprocessor = ColumnTransformer(
         [
             ("cat", categorical_encoder, categorical_cols),
             ("std_scaler", StandardScaler(), pass_through_cols),
-            # ("passthrough", "passthrough", pass_through_cols)
+            #("passthrough", "passthrough", pass_through_cols)
         ],
     )
 
-    # regressor = XGBRegressor(max_depth=9, n_estimators=250, subsample=0.8)
-    regressor = MLPRegressor(hidden_layer_sizes=(8, 4),
-    #                         alpha=0.001, max_iter=300)
+    # 0.358 0.68 0.646 0.686 0.696
+    regressor = CatBoostRegressor(logging_level="Silent")
+    # 0.443 0.701 0.638 0.706 0.592
+    regressor = CatBoostRegressor(iterations=1000, l2_leaf_reg=5, learning_rate=0.03, max_depth=6,  # random_strength=8,
+                                  logging_level="Silent")
+    # 0.452 0.696 0.622 0.701 0.579
+    regressor = CatBoostRegressor(iterations=1000, l2_leaf_reg=5, learning_rate=0.03, max_depth=6, random_strength=8,
+                                  logging_level="Silent")
+    # 0.452 0.696 0.622 0.701 0.579
+    regressor = CatBoostRegressor(iterations=1000, l2_leaf_reg=5, learning_rate=0.03, max_depth=6, random_strength=10,
+                                  logging_level="Silent")
 
-    parameters={  # 'nthread': [4],  # when use hyperthread, xgboost may become slower
-        'learning_rate': [0.05],  # so called `eta` value
-        'max_depth': [3, 5, 6, 7],
-        'min_child_weight': [4],
-        # 'min_split_loss': [1],
-        'subsample': [0.7],
-        'colsample_bytree': [0.7],
-        'n_estimators': [100, 200, 250]}
-
-    xgb_grid=GridSearchCV(regressor,
-                            parameters,
-                            cv=2,
-                            n_jobs=5,
-                            verbose=True)
-
-    pipe=make_pipeline(
+    pipe = make_pipeline(
         FunctionTransformer(_merge_external_data, validate=False),
         date_encoder,
         preprocessor,
