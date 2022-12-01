@@ -52,8 +52,8 @@ def _merge_external_data(X):
     # When using merge_asof left frame need to be sorted
     X["orig_index"] = np.arange(X.shape[0])
 
-    X = pd.merge_asof(  # , "nbas" , "raf10"
-        X.sort_values("date"), df_ext[columns_in_merged].sort_values("date").dropna(), on="date", direction="nearest")  # check result without direction=nearest
+    X = pd.merge_asof(
+        X.sort_values("date"), df_ext[columns_in_merged].sort_values("date").dropna(), on="date", direction="nearest")
     # Sort back to the original order
     X = X.sort_values("orig_index")
     del X["orig_index"]
