@@ -22,16 +22,16 @@ def _encode_dates(X):
     X.loc[:, "weekend"] = X["weekday"] > 4
 
     X.loc[:, "day_of_the_year"] = X["date"].dt.day  # 2020 366
-    X['sin_day_of_the_year'] = np.sin(2*np.pi*X["day_of_the_year"]/366)
-    X['cos_day_of_the_year'] = np.cos(2*np.pi*X["day_of_the_year"]/366)
+    X["sin_day_of_the_year"] = np.sin(2 * np.pi * X["day_of_the_year"] / 366)
+    X["cos_day_of_the_year"] = np.cos(2 * np.pi * X["day_of_the_year"] / 366)
 
-    X['sin_hours'] = np.sin(2*np.pi*X["hour"]/24)
-    X['cos_hours'] = np.cos(2*np.pi*X["hour"]/24)
-    X['sin_weekday'] = np.sin(2*np.pi*X["weekday"]/7)
-    X['cos_weekday'] = np.cos(2*np.pi*X["weekday"]/7)
+    X["sin_hours"] = np.sin(2 * np.pi * X["hour"] / 24)
+    X["cos_hours"] = np.cos(2 * np.pi * X["hour"] / 24)
+    X["sin_weekday"] = np.sin(2 * np.pi * X["weekday"] / 7)
+    X["cos_weekday"] = np.cos(2 * np.pi * X["weekday"] / 7)
 
-    X['sin_mnth'] = np.sin(2*np.pi*X["month"]/12)
-    X['cos_mnth'] = np.cos(2*np.pi*X["month"]/12)
+    X["sin_mnth"] = np.sin(2 * np.pi * X["month"] / 12)
+    X["cos_mnth"] = np.cos(2 * np.pi * X["month"] / 12)
 
     # Finally we can drop the original columns from the dataframe
     return X.drop(columns=["date"])
@@ -42,15 +42,14 @@ def get_estimator():
 
     categorical_encoder = OneHotEncoder(handle_unknown="ignore")
 
-    categorical_cols = ["counter_name", "site_name",
-                        "weekday", "weekend"]
+    categorical_cols = ["counter_name", "site_name", "weekday", "weekend"]
 
     pass_through_cols = ["sin_hours", "cos_hours", "sin_mnth", "cos_mnth"]
     preprocessor = ColumnTransformer(
         [
             ("cat", categorical_encoder, categorical_cols),
             # ("std_scaler", StandardScaler(), numerical_cols),
-            ("passthrough", "passthrough", pass_through_cols)
+            ("passthrough", "passthrough", pass_through_cols),
         ],
     )
 
