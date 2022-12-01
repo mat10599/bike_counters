@@ -7,12 +7,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.compose import ColumnTransformer
-from sklearn.linear_model import Ridge
-from sklearn.ensemble import AdaBoostRegressor
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
-from sklearn.neural_network import MLPRegressor
-from xgboost import XGBRegressor
 from catboost import CatBoostRegressor
 
 
@@ -74,37 +69,24 @@ def get_estimator():
                         "weekend", "hol_scol", "hol_bank", "quarantine1",
                         "quarantine2", "christmas_hols"]
 
-    # test avec site et count et pas mean
-    # tes en enlevant qlqs trucs
     pass_through_cols = ["weekday",
-                         "sin_mnth", "cos_mnth", "sin_hours", "cos_hours"] + ["cod_tend", "ff", "t", "u", "etat_sol"]  # + ["nbas", "ht_neige", "ww", "w1", "w2"]
+                         "sin_mnth", "cos_mnth", "sin_hours", "cos_hours"] + ["cod_tend", "ff", "t", "u", "etat_sol"]
 
     preprocessor = ColumnTransformer(
         [
             ("cat", categorical_encoder, categorical_cols),
-            ("std_scaler", StandardScaler(), pass_through_cols),
-            #("passthrough", "passthrough", pass_through_cols)
+            #("std_scaler", StandardScaler(), pass_through_cols),
+            ("passthrough", "passthrough", pass_through_cols)
         ],
     )
 
-    # 0.358 0.68 0.646 0.686 0.696
     regressor = CatBoostRegressor(logging_level="Silent")
-    # 0.443 0.701 0.638 0.706 0.592
-    regressor = CatBoostRegressor(iterations=1000, l2_leaf_reg=5, learning_rate=0.03, max_depth=6,  # random_strength=8,
-                                  logging_level="Silent")
-    # 0.452 0.696 0.622 0.701 0.579
-    regressor = CatBoostRegressor(iterations=1000, l2_leaf_reg=5, learning_rate=0.03, max_depth=6, random_strength=8,
-                                  logging_level="Silent")
-    # 0.452 0.696 0.622 0.701 0.579
-    regressor = CatBoostRegressor(iterations=1000, l2_leaf_reg=5, learning_rate=0.03, max_depth=6, random_strength=10,
-                                  logging_level="Silent")
 
     pipe = make_pipeline(
         FunctionTransformer(_merge_external_data, validate=False),
         date_encoder,
         preprocessor,
         regressor,
-        # xgb_grid
     )
 
     return pipe
